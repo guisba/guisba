@@ -13,20 +13,9 @@ Sou o Guilherme, de São Paulo. Estudo cibersegurança, exploro IA e acompanho e
 </picture>
 
 <picture>
-  <source media="(max-width: 600px)" srcset="./assets/head-activity-pt-narrow.svg">
-  <img src="./assets/head-activity-pt.svg" width="100%" alt="Atividade">
+  <source media="(max-width: 600px)" srcset="./cards/activity-pt-narrow.svg">
+  <img src="./cards/activity-pt.svg" width="100%" alt="Atividade no GitHub: skyline 3D das contribuições do último ano, sequências, totais, linguagens e troféus. Atualizado diariamente pela API do GitHub.">
 </picture>
-
-<p align="center">
-  <img src="https://github-readme-stats.vercel.app/api?username=guisba&show_icons=true&include_all_commits=true&bg_color=141012&title_color=FF5A6A&text_color=F2ECE6&icon_color=FF5A6A&ring_color=FF5A6A&border_color=46343A&hide_border=false&border_radius=14&locale=pt-br" width="49%" alt="Estatísticas do GitHub">
-  <img src="https://github-readme-stats.vercel.app/api/top-langs/?username=guisba&layout=compact&langs_count=8&bg_color=141012&title_color=FF5A6A&text_color=F2ECE6&icon_color=FF5A6A&ring_color=FF5A6A&border_color=46343A&hide_border=false&border_radius=14&locale=pt-br" width="49%" alt="Linguagens mais usadas">
-</p>
-<p align="center">
-  <img src="https://streak-stats.demolab.com/?user=guisba&background=141012&border=46343A&stroke=46343A&ring=FF5A6A&fire=FF5A6A&currStreakNum=F2ECE6&currStreakLabel=FF5A6A&sideNums=F2ECE6&sideLabels=B8A9A6&dates=B8A9A6&border_radius=14&locale=pt_BR" width="62%" alt="Sequência no GitHub">
-</p>
-<p align="center">
-  <img src="https://github-profile-trophy.vercel.app/?username=guisba&theme=onedark&background=141012&no-frame=true&column=7&margin-w=10&margin-h=10" width="100%" alt="Troféus do GitHub">
-</p>
 
 <!-- BLOG-POST-LIST:START -->
 <!-- BLOG-POST-LIST:END -->

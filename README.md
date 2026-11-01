@@ -13,20 +13,9 @@ I'm Guilherme, based in São Paulo. I study cybersecurity, explore AI and follow
 </picture>
 
 <picture>
-  <source media="(max-width: 600px)" srcset="./assets/head-activity-narrow.svg">
-  <img src="./assets/head-activity.svg" width="100%" alt="Activity">
+  <source media="(max-width: 600px)" srcset="./cards/activity-narrow.svg">
+  <img src="./cards/activity.svg" width="100%" alt="GitHub activity: 3D contribution skyline for the last year, streaks, totals, languages and trophies. Updated daily from the GitHub API.">
 </picture>
-
-<p align="center">
-  <img src="https://github-readme-stats.vercel.app/api?username=guisba&show_icons=true&include_all_commits=true&bg_color=141012&title_color=FF5A6A&text_color=F2ECE6&icon_color=FF5A6A&ring_color=FF5A6A&border_color=46343A&hide_border=false&border_radius=14" width="49%" alt="GitHub stats">
-  <img src="https://github-readme-stats.vercel.app/api/top-langs/?username=guisba&layout=compact&langs_count=8&bg_color=141012&title_color=FF5A6A&text_color=F2ECE6&icon_color=FF5A6A&ring_color=FF5A6A&border_color=46343A&hide_border=false&border_radius=14" width="49%" alt="Most used languages">
-</p>
-<p align="center">
-  <img src="https://streak-stats.demolab.com/?user=guisba&background=141012&border=46343A&stroke=46343A&ring=FF5A6A&fire=FF5A6A&currStreakNum=F2ECE6&currStreakLabel=FF5A6A&sideNums=F2ECE6&sideLabels=B8A9A6&dates=B8A9A6&border_radius=14&locale=en" width="62%" alt="GitHub streak">
-</p>
-<p align="center">
-  <img src="https://github-profile-trophy.vercel.app/?username=guisba&theme=onedark&background=141012&no-frame=true&column=7&margin-w=10&margin-h=10" width="100%" alt="GitHub trophies">
-</p>
 
 <!-- BLOG-POST-LIST:START -->
 <!-- BLOG-POST-LIST:END -->
