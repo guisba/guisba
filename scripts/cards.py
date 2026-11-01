@@ -244,7 +244,10 @@ def panel(data, lang, narrow):
                  f"{data['year']} {t['year']}; {data['commits']} {t['commits']}; {data['prs']} {t['prs']}; {data['issues']} {t['issues']}; "
                  f"{data['stars']} {t['stars']}; {data['repos']} {t['repos']}.")
     return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}" role="img" aria-label="{title_txt}">'
-            f'<title>{title_txt}</title><style>{style}</style><rect width="{W}" height="{H}" rx="22" fill="{CARBON}"/>{"".join(o)}</svg>\n')
+            f'<title>{title_txt}</title><style>{style}</style><defs><radialGradient id="pg" cx=".82" cy="0" r=".95"><stop offset="0" stop-color="{CRIMSON}" stop-opacity=".42"/><stop offset="1" stop-color="{CRIMSON}" stop-opacity="0"/></radialGradient>'
+            f'<linearGradient id="pe" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stop-color="{SIGNAL}" stop-opacity=".6"/><stop offset=".6" stop-color="{LINE}" stop-opacity=".5"/></linearGradient></defs>'
+            f'<rect width="{W}" height="{H}" rx="22" fill="{CARBON}"/><rect width="{W}" height="{H}" rx="22" fill="url(#pg)"/>'
+            f'<rect x=".75" y=".75" width="{W - 1.5}" height="{H - 1.5}" rx="22" fill="none" stroke="url(#pe)" stroke-width="1.5"/>{"".join(o)}</svg>\n')
 
 
 def main():
