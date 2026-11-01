@@ -1,0 +1,40 @@
+name: Latest blog posts
+on:
+  schedule:
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    # Runs only once at least one repository variable (Settings > Variables) is set.
+    if: ${{ vars.DEVTO_USER != '' || vars.MEDIUM_USER != '' || vars.BLOG_FEED != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build feed list
+        id: feeds
+        env:
+          DEVTO_USER: ${{ vars.DEVTO_USER }}
+          MEDIUM_USER: ${{ vars.MEDIUM_USER }}
+          BLOG_FEED: ${{ vars.BLOG_FEED }}
+        run: |
+          list=""
+          [ -n "$DEVTO_USER" ] && list="$list,https://dev.to/feed/$DEVTO_USER"
+          [ -n "$MEDIUM_USER" ] && list="$list,https://medium.com/feed/@$MEDIUM_USER"
+          [ -n "$BLOG_FEED" ] && list="$list,$BLOG_FEED"
+          echo "list=${list#,}" >> "$GITHUB_OUTPUT"
+      - uses: gautamkrishnar/blog-post-workflow@v1
+        with:
+          feed_list: ${{ steps.feeds.outputs.list }}
+          max_post_count: 5
+          comment_tag_name: BLOG-POST-LIST
+          readme_path: README.md
+          template: "$newline- [$title]($url) <sub>· $date</sub>"
+      - uses: gautamkrishnar/blog-post-workflow@v1
+        with:
+          feed_list: ${{ steps.feeds.outputs.list }}
+          max_post_count: 5
+          comment_tag_name: BLOG-POST-LIST
+          readme_path: README.pt-BR.md
+          template: "$newline- [$title]($url) <sub>· $date</sub>"
