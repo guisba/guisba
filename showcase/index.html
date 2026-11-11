@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#070808">
+<title>guisba — A portfolio in motion</title>
+<style>
+:root{color-scheme:dark;--bg:#070808;--ink:#e9e9e5;--red:#bd1430}
+*{box-sizing:border-box}html,body{height:100%;margin:0}body{background:var(--bg);color:var(--ink);font:13px/1.5 ui-monospace,Menlo,Consolas,monospace;display:flex;flex-direction:column;justify-content:center;align-items:center;overflow:hidden}
+main{width:min(100vw,calc(100vh * 16 / 9));position:relative;aspect-ratio:16/9;box-shadow:0 18px 100px #0009;background:#070808}canvas{display:block;width:100%;height:100%}
+#controls{position:absolute;bottom:14px;left:18px;right:18px;display:flex;align-items:center;gap:16px;padding:11px 14px;background:#090a0ae8;border:1px solid #ffffff30;backdrop-filter:blur(12px);border-radius:3px;transition:opacity .25s}
+#controls button{border:0;background:transparent;color:var(--ink);font:inherit;cursor:pointer;min-width:42px;min-height:38px;outline-offset:2px}#controls button:hover{color:#fff}#progress{appearance:none;flex:1;min-width:0;accent-color:var(--red);cursor:pointer}#time{font-variant-numeric:tabular-nums;font-size:11px;white-space:nowrap;color:#aaa}#seekhint{position:absolute;right:26px;top:22px;font-size:10px;letter-spacing:.13em;color:#bcbcbc}body.render #controls,body.render #seekhint{display:none}button:focus-visible,input:focus-visible{outline:2px solid #fff}
+@media(max-width:600px){#controls{left:6px;right:6px;bottom:6px;gap:4px;padding:4px}#time{display:none}#controls button{min-width:35px}#seekhint{display:none}}
+@media(prefers-reduced-motion:reduce){#controls{transition:none}}
+</style>
+</head>
+<body>
+<main aria-label="Animated 2026 portfolio film for GitHub user guisba">
+<canvas id="film" width="1280" height="720" role="img" aria-label="Code-rendered motion graphics featuring the public repositories Listed, DataBreaker, veil, GitHub Workflow Lab, and the guisba profile"></canvas>
+<div id="seekhint">CODE-RENDERED FILM · 2026</div>
+<div id="controls" aria-label="Film controls">
+<button id="play" aria-label="Pause video">Ⅱ</button>
+<input id="progress" aria-label="Seek" type="range" min="0" max="39.5" step="0.01" value="0">
+<span id="time">00:00 / 00:39</span>
+<button id="mute" aria-label="Mute soundtrack">♪</button>
+<button id="full" aria-label="Fullscreen">⛶</button>
+</div>
+</main>
+<script>
+(() => {
+'use strict';
+const canvas=document.getElementById('film'), ctx=canvas.getContext('2d',{alpha:false});
+const W=1280,H=720,DURATION=39.5, RED='#c11332', WHITE='#f0eee9', GREY='#8b9095', DARK='#070808';
+const playBtn=document.getElementById('play'),progress=document.getElementById('progress'),timeLabel=document.getElementById('time');
+let playing=true,t=0,last=0,muted=false,audio=null,beatIndex=-1;
+const clamp=(x,a=0,b=1)=>Math.min(b,Math.max(a,x));
+const ease=x=>{x=clamp(x);return x*x*(3-2*x)};
+const mix=(a,b,f)=>a+(b-a)*f;
+const pad=n=>String(n).padStart(2,'0');
+function text(s,x,y,size=18,color=WHITE,weight=500,align='left',tracking=0,alpha=1){
+ ctx.save();ctx.globalAlpha*=alpha;ctx.font=`${weight} ${size}px ${size<24?'Consolas,Menlo,monospace':'Arial,Helvetica,sans-serif'}`;ctx.textAlign=align;ctx.textBaseline='alphabetic';ctx.fillStyle=color;
+ if(tracking){const arr=[...s],wid=arr.map(c=>ctx.measureText(c).width);const total=wid.reduce((a,b)=>a+b,0)+tracking*(arr.length-1);let px=x-(align==='center'?total/2:align==='right'?total:0);arr.forEach((c,i)=>{ctx.fillText(c,px,y);px+=wid[i]+tracking});}
+ else ctx.fillText(s,x,y);ctx.restore();
+}
+function line(x1,y1,x2,y2,col='#ffffff',alpha=1,lw=1){ctx.save();ctx.strokeStyle=col;ctx.globalAlpha*=alpha;ctx.lineWidth=lw;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();ctx.restore();}
+function rect(x,y,w,h,col,alpha=1){ctx.save();ctx.fillStyle=col;ctx.globalAlpha*=alpha;ctx.fillRect(x,y,w,h);ctx.restore();}
+function rounded(x,y,w,h,r=6){ctx.beginPath();ctx.roundRect(x,y,w,h,r)}
+function capsule(s,x,y){rect(x,y-11,6,6,RED);text(s,x+17,y,11,WHITE,600,'left',1.7)}
+function noise(n){let x=Math.sin(n*127.1+19.17)*43758.5453;return x-Math.floor(x)}
+function sceneAlpha(local,len){return ease(local/.65)*ease((len-local)/.7)}
+function background(seconds,variant=0){
+ ctx.fillStyle=DARK;ctx.fillRect(0,0,W,H);
+ const pulse=.5+.5*Math.sin(seconds*.72);
+ const g=ctx.createRadialGradient(940+50*Math.sin(seconds*.15),355,30,930,380,780);
+ g.addColorStop(0,`rgba(82,7,24,${.38+.08*pulse})`);g.addColorStop(.45,'rgba(28,8,15,.23)');g.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+ for(let i=0;i<100;i++){
+   const x=noise(i*7+1)*W, y=noise(i*11+2)*H, phase=noise(i*17+4)*7;
+   const v=.05+.14*Math.pow(Math.max(0,Math.sin(seconds*.37+phase)),3);
+   rect(x,y,1+(i%9===0?1:0),1,'#e9dee1',v);
+ }
+ // A perspective construction grid, tied to the repo/data visual language.
+ ctx.save();ctx.beginPath();ctx.rect(0,360,W,360);ctx.clip();
+ const vanX=940+120*Math.sin(seconds*.08),vanY=355;
+ for(let i=-10;i<=10;i++)line(vanX,vanY,vanX+i*165,H,RED,.075,1);
+ for(let i=0;i<13;i++){const n=(i+seconds*.21)%13;const f=n/13;const y=vanY+Math.pow(f,2.1)*(H-vanY);line(0,y,W,y,WHITE,.025+f*.065,1);}
+ ctx.restore();
+ if(variant===1){for(let i=0;i<27;i++){const y=90+i*20+((seconds*16)%20);line(0,y,1280,y,WHITE,.018);}}
+ const vg=ctx.createRadialGradient(W/2,H/2,260,W/2,H/2,850);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.63)');ctx.fillStyle=vg;ctx.fillRect(0,0,W,H);
+}
+function frameLabels(seconds,chapter,code){
+ line(64,56,1215,56,WHITE,.19);line(64,664,1215,664,WHITE,.16);
+ text('G / S',66,39,14,WHITE,800,'left',2);text(chapter.toUpperCase(),200,39,10,GREY,600,'left',2);text('PUBLIC WORKS  /  2026',1210,39,10,GREY,600,'right',1.2);
+ text(code.toUpperCase(),66,688,10,GREY,600,'left',1.8);
+ const pct=clamp(seconds/DURATION);rect(490,683,588,2,'#ffffff',.13);rect(490,683,588*pct,2,RED,.95);
+ text(`${pad(Math.floor(seconds/60))}:${pad(Math.floor(seconds%60))} / 00:39`,1210,690,10,WHITE,500,'right',.4);
+}
+function project(v,rx,ry,cx,cy,scale){
+ const [x0,y0,z0]=v;const cyy=Math.cos(ry),sy=Math.sin(ry),cxx=Math.cos(rx),sx=Math.sin(rx);
+ let x=x0*cyy+z0*sy,z=-x0*sy+z0*cyy,y=y0*cxx-z*sx;z=y0*sx+z*cxx;
+ const f=650/(650+z);return [cx+x*f*scale,cy+y*f*scale,z];
+}
+function ruby(cx,cy,scale,seconds,alpha=1){
+ const V=[[0,-143,0],[155,-43,0],[77,-43,134],[-77,-43,134],[-155,-43,0],[-77,-43,-134],[77,-43,-134],[108,56,0],[51,56,93],[-51,56,93],[-108,56,0],[-51,56,-93],[51,56,-93],[0,147,0]];
+ const F=[];for(let i=0;i<6;i++){F.push([0,i+1,((i+1)%6)+1]);F.push([i+1,((i+1)%6)+1,((i+1)%6)+7]);F.push([i+1,((i+1)%6)+7,i+7]);F.push([13,i+7,((i+1)%6)+7]);}
+ const pts=V.map(v=>project(v,-.22+.15*Math.sin(seconds*.34),seconds*.4,cx,cy,scale));
+ const faces=F.map((f,k)=>({f,depth:f.reduce((s,j)=>s+pts[j][2],0)/3,k})).sort((a,b)=>b.depth-a.depth);
+ ctx.save();ctx.globalAlpha*=alpha;ctx.shadowColor='#d00932';ctx.shadowBlur=37*scale;
+ for(const {f,k} of faces){const a=pts[f[0]],b=pts[f[1]],c=pts[f[2]],v1=[b[0]-a[0],b[1]-a[1]],v2=[c[0]-a[0],c[1]-a[1]],cross=v1[0]*v2[1]-v1[1]*v2[0];
+  let l=clamp(.23+.52*Math.abs(cross)/26000+.2*Math.sin(k*5+seconds*.5),.08,1);
+  let rr=Math.floor(57+l*150),gg=Math.floor(3+l*26),bb=Math.floor(12+l*47);
+  ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.lineTo(c[0],c[1]);ctx.closePath();ctx.fillStyle=`rgb(${rr},${gg},${bb})`;ctx.fill();ctx.strokeStyle=`rgba(255,172,176,${.08+.12*l})`;ctx.lineWidth=.9;ctx.stroke();
+ }
+ ctx.restore();
+}
+function orbit(cx,cy,r,seconds,alpha=1){ctx.save();ctx.globalAlpha*=alpha;ctx.translate(cx,cy);ctx.rotate(-.3);ctx.scale(1,.24);ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.strokeStyle='#ffffff';ctx.globalAlpha*=.13;ctx.lineWidth=1.5;ctx.stroke();ctx.restore();const ang=seconds*.7;rect(cx+Math.cos(ang)*r-2,cy+Math.sin(ang)*r*.24-2,4,4,WHITE,alpha*.8)}
+function revealTitle(lines,seconds,start=0,opts={}){
+ const {x=69,y=265,size=104,leading=106,color=WHITE}=opts;lines.forEach((s,i)=>{const p=ease((seconds-start-i*.15)/.62);ctx.save();ctx.globalAlpha=p;ctx.translate(0,(1-p)*34);text(s,x,y+i*leading,size,color,800,'left',-2);ctx.restore();});
+}
+function sceneIntro(local){const a=sceneAlpha(local,5),p=ease(local/1.1);ctx.save();ctx.globalAlpha=a;
+ ruby(957,358,.96,local,.9);orbit(962,360,225,local,.56);
+ capsule('AN ORIGINAL CODE-RENDERED FILM',70,158);
+ revealTitle(['A PORTFOLIO','IN MOTION.'],local,.28,{x:66,y:299,size:87,leading:103});
+ text('GUILHERME SABATINI   /   @GUISBA',69,492,17,WHITE,500,'left',1.7,p);
+ text('A snapshot of public work, built in code.',70,529,14,GREY,500,'left',.5,p);
+ line(70,561,510,561,RED,.78,2);ctx.restore();}
+function sceneProfile(local){const a=sceneAlpha(local,5.5);ctx.save();ctx.globalAlpha=a;
+ ruby(1026,346,.7,local+5,.75);orbit(1015,357,190,local+5,.5);
+ capsule('01  /  PROFILE README',71,150);
+ revealTitle(['GUILHERME','SABATINI'],local,.15,{x:69,y:281,size:101,leading:102});
+ text('SAO PAULO  /  BRAZIL',75,460,16,GREY,500,'left',2);
+ const words=['CYBERSECURITY','ARTIFICIAL INTELLIGENCE','SOFTWARE DEVELOPMENT','ECONOMICS'];
+ words.forEach((s,i)=>{const p=ease((local-.75-i*.17)/.45);rect(72,493+i*30,5,5,RED,p);text(s,91,499+i*30,13,WHITE,500,'left',1.4,p);});
+ text('OPEN TO WORK',1024,569,13,WHITE,700,'center',2);line(924,583,1120,583,RED,.7,2);
+ ctx.restore();}
+function sceneData(local){const a=sceneAlpha(local,7.5),progress=ease((local-.65)/4.8);ctx.save();ctx.globalAlpha=a;
+ capsule('02  /  PRIVACY & FILE PROVENANCE',69,143);
+ revealTitle(['DATA','BREAKER'],local,.1,{x:68,y:255,size:113,leading:109});
+ text('SEE WHAT FILES REVEAL.',73,455,23,WHITE,700,'left',1.7);
+ text('Inspect → clean → independently verify.',72,502,15,GREY,500,'left',.2);
+ line(71,527,525,527,RED,.5,1.5);
+ ['LOCAL-FIRST','NO TELEMETRY','METADATA / C2PA / AI TRACES'].forEach((s,i)=>text(s,74,559+i*27,12,i===2?WHITE:GREY,500,'left',1.3,ease((local-1.1-i*.2)/.6)));
+ const x=655,y=142,w=535,h=467;rect(x,y,w,h,'#0b0d0e',.97);ctx.save();ctx.strokeStyle='#525255';ctx.lineWidth=1;ctx.strokeRect(x+.5,y+.5,w-1,h-1);ctx.restore();
+ text('DATABREAKER   /   INVENTORY',x+26,y+36,13,WHITE,700,'left',1.6);text('READ ONLY',x+w-24,y+36,11,RED,700,'right',1.2);line(x+20,y+55,x+w-20,y+55,WHITE,.18);
+ const rows=[['FILE FORMAT','PNG / JPEG / PDF'],['METADATA','EXIF · XMP · IPTC'],['PROVENANCE','C2PA / JUMBF'],['TRACE','AI WORKFLOW FIELDS'],['POLICY','SAFE / DEEP CLEAN'],['VALIDATION','ORIGINAL → SANITIZED']];
+ rows.forEach(([k,v],i)=>{const yy=y+91+i*54;const vis=ease((local-.85-i*.31)/.5);text(k,x+29,yy,12,GREY,500,'left',.4,vis);text(v,x+205,yy,12,WHITE,500,'left',.3,vis);line(x+27,yy+19,x+w-26,yy+19,WHITE,.08*vis)});
+ rect(x+25,y+h-40,w-50,5,'#eeeeee',.1);rect(x+25,y+h-40,(w-50)*progress,5,RED,.95);text(progress>.99?'SCAN COMPLETE':'ANALYZING METADATA',x+25,y+h-53,10,WHITE,600,'left',1.1);
+ ctx.restore();}
+function sceneListed(local){const a=sceneAlpha(local,7);ctx.save();ctx.globalAlpha=a;capsule('03  /  GAMES, FRIENDS, DECISIONS',70,139);
+ revealTitle(['LISTED.'],local,.15,{x:67,y:288,size:142});
+ text('DECIDE WHAT TO PLAY, TOGETHER.',72,348,22,WHITE,700,'left',1.1);
+ text('Shared game lists · real-time rooms · voting.',73,384,15,GREY,500,'left',.5);
+ const bx=77,by=432;
+ [['STEAM','DISCOVERY'],['LIVE','ROOMS'],['SMART','FILTERS'],['QR','INVITES']].forEach(([aa,bb],i)=>{const x=bx+i*144;const v=ease((local-.6-i*.13)/.48);rect(x,by,132,122,'#141618',v);line(x,by,x+132,by,RED,v,2);text(aa,x+17,by+41,26,WHITE,800,'left',-.7,v);text(bb,x+17,by+71,11,GREY,600,'left',1.3,v);text('↗',x+106,by+107,18,RED,500,'left',0,v)});
+ // Animated list is an abstract interface sample, not actual gameplay or a product screenshot.
+ const x=718,y=153,w=480,h=439;rect(x,y,w,h,'#111314',.97);ctx.strokeStyle='#424345';ctx.strokeRect(x+.5,y+.5,w-1,h-1);
+ text('GROUP LIST',x+25,y+40,15,WHITE,700,'left',1.6);rect(x+w-132,y+18,104,34,RED,.9);text('VOTE',x+w-80,y+41,12,WHITE,700,'center',1);
+ line(x+24,y+60,x+w-22,y+60,WHITE,.2);
+ ['OPTION 01','OPTION 02','OPTION 03','OPTION 04'].forEach((s,i)=>{const ry=y+93+i*80;rect(x+25,ry,46,47,['#611526','#342128','#4d111f','#29292b'][i]);text('0'+(i+1),x+48,ry+31,18,WHITE,700,'center');text(s,x+90,ry+18,14,WHITE,700);text('SHARED GAME LIST',x+90,ry+37,10,GREY,500);const pct=.17+.13*i+.16*Math.sin(local*.7+i)**2;rect(x+328,ry+25,120,5,'#2e3030');rect(x+328,ry+25,120*pct*ease((local-.5-i*.13)/.8),5,RED);line(x+24,ry+60,x+w-22,ry+60,WHITE,.09)});
+ ctx.restore();}
+function sceneVeil(local){const a=sceneAlpha(local,5);ctx.save();ctx.globalAlpha=a;
+ capsule('04  /  FILE SHARING & CHAT',71,143);
+ revealTitle(['VEIL.'],local,.15,{x:66,y:333,size:175});
+ text('A SIMPLE FILE SHARING AND',73,406,22,WHITE,700,'left',1);
+ text('CHATTING SOLUTION.',73,439,22,WHITE,700,'left',1);
+ line(74,466,510,466,RED,.8,2);text('PUBLIC README  /  PROJECT OVERVIEW',73,503,11,GREY,500,'left',1.5);
+ const cx=950,cy=356;const pts=[[0,-143],[-173,0],[173,0],[0,151],[-85,-79],[88,74],[96,-95],[-85,88]];
+ pts.forEach(([px,py],i)=>{for(let j=i+1;j<pts.length;j++){if((i*7+j)%4===0){const [qx,qy]=pts[j];line(cx+px,cy+py,cx+qx,cy+qy,RED,.10+.16*Math.sin(local*1.2+i)**2,1)}}});
+ pts.forEach(([px,py],i)=>{const d=Math.sin(local*1.4+i*2)*5;rect(cx+px-4,cy+py+d-4,9,9,i===0||i===3?RED:WHITE,.55+.3*Math.sin(local*1.1+i)**2)});
+ orbit(cx,cy,222,local+15,.7);ctx.restore();}
+function sceneLab(local){const a=sceneAlpha(local,4);ctx.save();ctx.globalAlpha=a;
+ capsule('05  /  DOCUMENTATION & WORKFLOWS',69,142);
+ revealTitle(['GITHUB','WORKFLOW','LAB.'],local,.1,{x:66,y:237,size:83,leading:90});
+ text('PULL REQUESTS · REVIEWS · AUTOMATION SAFETY',71,531,16,WHITE,600,'left',.8);
+ text('Documented experiments. Transparent methods.',71,567,14,GREY,500,'left',.3);
+ const x=900,y=176;line(x,y+68,x+155,y+68,WHITE,.28,2);line(x+155,y+68,x+155,y+231,WHITE,.28,2);line(x+155,y+231,x,y+231,RED,.64,2);
+ [['PR',x,y+68],['REVIEW',x+155,y+68],['MERGE',x+155,y+231],['DOCS',x,y+231]].forEach(([s,cx,cy],i)=>{let p=ease((local-.45-i*.32)/.5);rect(cx-39,cy-35,79,70,i===2?'#6c1024':'#131415',p);ctx.strokeStyle=RED;ctx.globalAlpha=p*a;ctx.strokeRect(cx-39,cy-35,79,70);ctx.globalAlpha=a;text(s,cx,cy+5,13,WHITE,700,'center',.6,p)});
+ ctx.restore();}
+function sceneEnd(local){const a=sceneAlpha(local,5.5);ctx.save();ctx.globalAlpha=a;
+ ruby(927,337,.86,local+24,.9);orbit(927,342,224,local+24,.55);
+ capsule('OPEN SOURCE / PUBLIC WORKS',70,141);
+ revealTitle(['THE WORK','CONTINUES.'],local,.2,{x:66,y:297,size:95,leading:108});
+ text('GITHUB.COM/GUISBA',71,511,26,WHITE,700,'left',1.3);
+ text('Listed   /   DataBreaker   /   veil',72,555,14,GREY,500,'left',.3);
+ text('github-workflow-lab   /   guisba',72,582,14,GREY,500,'left',.3);
+ line(72,611,584,611,RED,.9,2);ctx.restore();}
+const scenes=[{start:0,d:5,name:'INTRO',fn:sceneIntro,code:'A PORTFOLIO IN MOTION'},
+{start:5,d:5.5,name:'PROFILE',fn:sceneProfile,code:'GITHUB.COM/GUISBA'},
+{start:10.5,d:7.5,name:'DATABREAKER',fn:sceneData,code:'GITHUB.COM/GUISBA/DATABREAKER'},
+{start:18,d:7,name:'LISTED',fn:sceneListed,code:'GITHUB.COM/GUISBA/LISTED'},
+{start:25,d:5,name:'VEIL',fn:sceneVeil,code:'GITHUB.COM/GUISBA/VEIL'},
+{start:30,d:4,name:'WORKFLOW LAB',fn:sceneLab,code:'GITHUB.COM/GUISBA/GITHUB-WORKFLOW-LAB'},
+{start:34,d:5.5,name:'OUTRO',fn:sceneEnd,code:'GITHUB.COM/GUISBA'}];
+function renderAt(sec){t=clamp(sec,0,DURATION);ctx.save();background(t, t>10&&t<18?1:0);
+ const scene=scenes.find(s=>t>=s.start&&t<s.start+s.d)||scenes.at(-1);scene.fn(t-scene.start);
+ // Short white horizontal timecode cuts and subtle deterministic film grain.
+ for(let i=0;i<110;i++){const x=noise(i*53+Math.floor(t*25)*71)*W,y=noise(i*29+Math.floor(t*25)*97)*H;rect(x,y,1,1,WHITE,.025)}
+ frameLabels(t,scene.name,scene.code);ctx.restore();progress.value=String(t);timeLabel.textContent=`${pad(Math.floor(t/60))}:${pad(Math.floor(t%60))} / 00:39`;
+ return t;}
+// Lightweight synthesized preview cues; final rendered movie receives the original scored soundtrack.
+function audioInit(){if(audio)return;const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;audio=new AC();}
+function tickSound(freq=68,seconds=.15,vol=.09){if(muted||!audio)return;const o=audio.createOscillator(),g=audio.createGain(),filter=audio.createBiquadFilter();o.type='sine';o.frequency.setValueAtTime(freq,audio.currentTime);o.frequency.exponentialRampToValueAtTime(Math.max(25,freq*.55),audio.currentTime+seconds);filter.type='lowpass';filter.frequency.value=420;g.gain.setValueAtTime(vol,audio.currentTime);g.gain.exponentialRampToValueAtTime(.0001,audio.currentTime+seconds);o.connect(filter);filter.connect(g);g.connect(audio.destination);o.start();o.stop(audio.currentTime+seconds+.01);}
+function loop(now){if(!last)last=now;const dt=Math.min(.1,(now-last)/1000);last=now;if(playing){const old=t;renderAt(t+dt);const b=Math.floor(t*1.7);if(b!==beatIndex&&t<DURATION-.2){beatIndex=b;tickSound(b%4===0?58:95,b%4===0?.3:.1,b%4===0?.11:.035);}if(t>=DURATION)playing=false;}requestAnimationFrame(loop)}
+function toggle(){if(t>=DURATION)t=0;playing=!playing;playBtn.textContent=playing?'Ⅱ':'▶';playBtn.setAttribute('aria-label',playing?'Pause video':'Play video');if(playing){audioInit();audio?.resume().catch(()=>{});}}
+playBtn.addEventListener('click',toggle);canvas.addEventListener('click',toggle);
+progress.addEventListener('input',e=>{renderAt(+e.target.value);beatIndex=Math.floor(t*1.7);});
+document.getElementById('mute').addEventListener('click',()=>{muted=!muted;document.getElementById('mute').textContent=muted?'×':'♪';});
+document.getElementById('full').addEventListener('click',()=>{const main=document.querySelector('main');if(document.fullscreenElement)document.exitFullscreen();else main.requestFullscreen?.();});
+document.addEventListener('keydown',e=>{if(['Space','ArrowLeft','ArrowRight'].includes(e.code)&&e.target.tagName!=='INPUT'){e.preventDefault();if(e.code==='Space')toggle();else renderAt(t+(e.code==='ArrowRight'?2:-2));}});
+if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){playing=false;playBtn.textContent='▶';renderAt(1.8);}
+else renderAt(0);window.__frame=renderAt;window.__filmDuration=DURATION;window.__scenes=scenes.map(({start,d,name})=>({start,d,name}));requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
