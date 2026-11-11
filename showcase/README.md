@@ -43,4 +43,4 @@ The original soundtrack is generated locally by `score.py` using procedural synt
 - `render.py` — browser-to-FFmpeg exporter and scene screenshot QA.
 - `requirements.txt` — Python dependencies required only for offline rendering.
 
-MIT license for the original code, graphics, and synthesized soundtrack. Names and brands of third-party services remain the property of their respective owners.
+All graphics and audio are generated from project code. Third-party names and brands are used descriptively.
